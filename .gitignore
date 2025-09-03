@@ -1,0 +1,61 @@
+# OS specific
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# mise
+.mise.lock
+
+# Backend (Kotlin/Gradle)
+backend/build/
+backend/.gradle/
+backend/out/
+backend/bin/
+backend/.settings/
+backend/.project
+backend/.classpath
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Frontend (Node.js/SvelteKit)
+frontend/node_modules/
+frontend/.svelte-kit/
+frontend/build/
+frontend/dist/
+frontend/.env
+frontend/.env.local
+frontend/.env.*.local
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/pnpm-debug.log*
+frontend/lerna-debug.log*
+
+# Docker
+docker-data/
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+tmp/
+
+# Other
+.serena/

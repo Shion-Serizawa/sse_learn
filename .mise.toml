@@ -1,0 +1,31 @@
+[tools]
+java = "17"
+node = "22"
+gradle = "8"
+
+
+[tasks.backend]
+description = "Run backend development server"
+run = "cd backend && gradle bootRun"
+
+[tasks.frontend]
+description = "Run frontend development server"  
+run = "cd frontend && npm run dev"
+
+[tasks.dev]
+description = "Run both backend and frontend in parallel"
+depends = ["backend", "frontend"]
+
+[tasks.test]
+description = "Run all tests"
+run = [
+    "cd backend && gradle test",
+    "cd frontend && npm test"
+]
+
+[tasks.build]
+description = "Build all components"
+run = [
+    "cd backend && gradle build",
+    "cd frontend && npm run build"
+]

@@ -1,0 +1,48 @@
+services:
+  valkey:
+    image: valkey/valkey:8-alpine
+    container_name: sse-learn-valkey
+    ports:
+      - "6379:6379"
+    command: valkey-server --appendonly yes --save 60 1 --loglevel warning
+    volumes:
+      - valkey-data:/data
+    networks:
+      - sse-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: sse-learn-backend
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_REDIS_HOST=valkey
+    depends_on:
+      - valkey
+    volumes:
+      - ./backend:/app
+    networks:
+      - sse-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: sse-learn-frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - sse-network
+
+volumes:
+  valkey-data:
+
+networks:
+  sse-network:
+    driver: bridge

@@ -1,0 +1,14 @@
+# 開発専用Docker Compose設定
+# 使用方法: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+services:
+  valkey:
+    # 開発用: よりデバッグしやすい設定
+    command: valkey-server --appendonly yes --save 60 1 --loglevel debug
+
+  # 開発時はValkeyのみ起動し、backend/frontendはローカルで実行
+  # backend:
+  #   profiles: ["full"] # フルスタック動作時のみ起動
+
+  # frontend:
+  #   profiles: ["full"] # フルスタック動作時のみ起動

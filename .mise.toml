@@ -6,7 +6,7 @@ gradle = "8"
 
 [tasks.backend]
 description = "Run backend development server"
-run = "cd backend && gradle bootRun"
+run = "cd backend && ./gradlew.bat bootRun"
 
 [tasks.frontend]
 description = "Run frontend development server"  
@@ -19,13 +19,25 @@ depends = ["backend", "frontend"]
 [tasks.test]
 description = "Run all tests"
 run = [
-    "cd backend && gradle test",
+    "cd backend && ./gradlew.bat test",
     "cd frontend && npm test"
 ]
 
 [tasks.build]
 description = "Build all components"
 run = [
-    "cd backend && gradle build",
+    "cd backend && ./gradlew.bat build",
     "cd frontend && npm run build"
 ]
+
+[tasks.docker-dev]
+description = "Start development services (Valkey only)"
+run = "docker-compose -f docker-compose.yml -f docker-compose.dev.yml up valkey -d"
+
+[tasks.docker-full]
+description = "Start full stack with Docker"
+run = "docker-compose --profile full up -d"
+
+[tasks.docker-stop]
+description = "Stop all Docker services"
+run = "docker-compose down"

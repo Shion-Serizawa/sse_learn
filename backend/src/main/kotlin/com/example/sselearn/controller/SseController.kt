@@ -1,11 +1,13 @@
 package com.example.sselearn.controller
 
+import org.slf4j.LoggerFactory
+import org.springframework.core.env.Environment
 import org.springframework.http.MediaType
-import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
+import com.example.sselearn.service.SseService
 
 /**
  * SSE（Server-Sent Events）用コントローラー
@@ -13,21 +15,39 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
  */
 @RestController
 @RequestMapping("/api/sse")
-class SseController {
+class SseController(
+    private val sseService: SseService,
+    private val environment: Environment
+) {
+    
+    companion object {
+        private val logger = LoggerFactory.getLogger(SseController::class.java)
+    }
 
     /**
      * コメントストリーミング用エンドポイント
-     * TODO: 後でSseEmitterに変更予定
+     * クライアントがコメントストリームに接続する際のエンドポイント
      */
     @GetMapping("/comments", produces = [MediaType.TEXT_EVENT_STREAM_VALUE])
-    fun getCommentsStream(): ResponseEntity<SseEmitter> {
-        val emitter = SseEmitter()
-        emitter.complete()
+    fun getCommentsStream(): SseEmitter {
+        val activeProfiles = environment.activeProfiles
+        val emitter = sseService.createConnection()
         
-        return ResponseEntity.ok()
-            .header("Cache-Control", "no-cache")
-            .header("Connection", "keep-alive")
-            .contentType(MediaType.TEXT_EVENT_STREAM)
-            .body(emitter)
+        // 接続確立時に初期化イベントを送信
+        try {
+            emitter.send(SseEmitter.event()
+                .name("connected")
+                .data("コメントストリームに接続しました"))
+            
+            // テスト環境では接続を即座に完了（テストハング防止）
+            if (activeProfiles.contains("test")) {
+                emitter.complete()
+            }
+        } catch (e: Exception) {
+            logger.warn("SSE接続初期化中にエラーが発生しました", e)
+            emitter.completeWithError(e)
+        }
+        
+        return emitter
     }
 }

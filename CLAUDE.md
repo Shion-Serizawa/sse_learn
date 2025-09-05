@@ -133,12 +133,10 @@ cd backend && mise exec -- ./gradlew.bat test
 ## 開発方針
 このプロジェクトは **Kent BeckのTest-Driven Development (TDD)** に従って開発します。
 
-<repeat_this_order>
 ### TDDサイクル
 1. **Red**: 失敗するテストを書く
 2. **Green**: テストを通すための最小限のコードを書く  
 3. **Refactor**: コードをリファクタリングして品質を向上させる
-</repeat_this_order>
 
 ### 開発戦略・ブランチ運用
 - **バックエンド先行開発**: APIを先に完成させてからフロントエンド実装
@@ -213,3 +211,10 @@ test(sse): GET /api/sse/comments エンドポイント基本動作
 4. **フェーズ4**: 運営通知システム（バックエンド）
 5. **フェーズ5**: 運営通知機能（フロントエンド）
 6. **フェーズ6**: Valkey統合（将来実装）
+
+<critical_development_rules>
+### TDDサイクル
+1. **Red**: 失敗するテストを書く
+2. **Green**: テストを通すための最小限のコードを書く  
+3. **Refactor**: コードをリファクタリングして品質を向上させる
+</critical_development_rules>

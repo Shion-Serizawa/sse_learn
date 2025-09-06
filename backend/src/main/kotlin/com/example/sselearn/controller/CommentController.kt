@@ -2,6 +2,7 @@ package com.example.sselearn.controller
 
 import com.example.sselearn.dto.CommentRequest
 import com.example.sselearn.entity.Comment
+import com.example.sselearn.service.CommentService
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
@@ -18,7 +19,9 @@ import java.util.UUID
  */
 @RestController
 @RequestMapping("/api/comments")
-class CommentController {
+class CommentController(
+    private val commentService: CommentService
+) {
 
     @PostMapping(consumes = [MediaType.APPLICATION_JSON_VALUE])
     fun postComment(@RequestBody request: CommentRequest): ResponseEntity<String> {
@@ -43,11 +46,11 @@ class CommentController {
             timestamp = LocalDateTime.now()
         )
         
-        // TODO: 将来的にはCommentServiceに保存処理を委譲する
-        // 現在は最小限の実装として、エンティティ生成のみ実行
+        // CommentServiceに保存処理を委譲
+        val savedComment = commentService.saveComment(comment)
         
         // 201と作成されたコメント情報を返す
         return ResponseEntity.status(HttpStatus.CREATED)
-            .body("""{"id":"${comment.id}","status":"created","timestamp":"${comment.timestamp}"}""")
+            .body("""{"id":"${savedComment.id}","status":"created","timestamp":"${savedComment.timestamp}"}""")
     }
 }

@@ -210,4 +210,32 @@ class CommentServiceTests {
         // "comment"イベント名で配信されることを確認
         verify(sseService, times(1)).broadcastToAll("comment", comment)
     }
+    
+    // === 2.5 複数クライアント同期と履歴配信 ===
+    
+    @Test
+    fun `直近のコメントを指定件数取得する`() {
+        // Red: 複数コメントの中から直近N件を新しい順で取得することを期待
+        val baseTime = LocalDateTime.now()
+        val comments = (1..5).map { i ->
+            Comment(
+                id = UUID.randomUUID(),
+                username = "user$i",
+                message = "message$i",
+                timestamp = baseTime.plusMinutes(i.toLong())
+            )
+        }
+        
+        // コメントを保存（順序は関係なし）
+        comments.forEach { commentService.saveComment(it) }
+        
+        // 直近3件を取得（新しい順）
+        val recent = commentService.findRecent(3)
+        
+        assertThat(recent).hasSize(3)
+        // 新しい順なので、message5, message4, message3 の順になる
+        assertThat(recent[0].message).isEqualTo("message5")
+        assertThat(recent[1].message).isEqualTo("message4")
+        assertThat(recent[2].message).isEqualTo("message3")
+    }
 }

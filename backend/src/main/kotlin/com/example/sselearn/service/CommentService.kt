@@ -58,6 +58,15 @@ class CommentService(
     }
     
     /**
+     * 直近のコメントを指定件数取得する（新しい順）
+     */
+    fun findRecent(limit: Int): List<Comment> {
+        return comments.values
+            .sortedByDescending { it.timestamp }
+            .take(limit)
+    }
+    
+    /**
      * 全てのコメントをクリア（テスト用）
      */
     fun clearAll() {

@@ -2,11 +2,12 @@
   import { onMount, onDestroy } from 'svelte';
   import { CommentApi } from '$lib/services/CommentApi';
   import { CommentSseManager } from '$lib/services/CommentSseManager';
-  import { resetAllStores } from '$lib/stores/commentStore';
+  import { resetAllStores, connectionStore } from '$lib/stores/commentStore';
   import CommentForm from '$lib/components/CommentForm.svelte';
   import CommentList from '$lib/components/CommentList.svelte';
   import ConnectionStatus from '$lib/components/ConnectionStatus.svelte';
   import type { CommentResponse, ApiError } from '$lib/types/comment';
+  import type { SseConnectionState } from '$lib/types/sse';
   
   // Configuration
   const API_BASE_URL = 'http://localhost:8080';
@@ -18,6 +19,7 @@
   // State
   let isConnecting = $state(false);
   let lastError = $state<string | null>(null);
+  let connectionState = $state<SseConnectionState>('disconnected');
   
   // Initialize services
   onMount(() => {
@@ -26,6 +28,11 @@
     // Initialize services
     commentApi = new CommentApi(API_BASE_URL);
     sseManager = new CommentSseManager(API_BASE_URL);
+    
+    // Subscribe to connection state
+    const unsubscribeConnection = connectionStore.subscribe(state => {
+      connectionState = state;
+    });
     
     // Start SSE connection
     handleConnect();
@@ -39,6 +46,7 @@
     
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
+      unsubscribeConnection();
     };
   });
   
@@ -137,14 +145,16 @@
     <!-- Comments sidebar -->
     <aside class="comments-section" aria-label="コメント欄">
       <div class="comments-container">
-        <!-- Connection status -->
-        <div class="status-section">
-          <ConnectionStatus 
-            onReconnectClick={handleReconnect}
-            showStats={false}
-            compact={true}
-          />
-        </div>
+        <!-- Connection status (only show when not connected) -->
+        {#if connectionState !== 'connected'}
+          <div class="status-section">
+            <ConnectionStatus 
+              onReconnectClick={handleReconnect}
+              showStats={false}
+              compact={true}
+            />
+          </div>
+        {/if}
         
         <!-- Error display -->
         {#if lastError}
@@ -350,6 +360,7 @@
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
     overflow: hidden;
     max-height: calc(100vh - 200px);
+    min-height: 600px;
   }
 
   .comments-container {
@@ -359,9 +370,10 @@
   }
 
   .status-section {
-    padding: 1rem;
+    padding: 0.75rem 1rem;
     border-bottom: 1px solid #e2e8f0;
     background: #f8fafc;
+    flex-shrink: 0;
   }
 
   .error-banner {
@@ -401,11 +413,14 @@
 
   .form-section {
     border-bottom: 1px solid #e2e8f0;
+    flex-shrink: 0;
   }
 
   .list-section {
     flex: 1;
     min-height: 0;
+    display: flex;
+    flex-direction: column;
   }
 
   /* Footer */

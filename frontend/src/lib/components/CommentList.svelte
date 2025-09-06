@@ -24,6 +24,7 @@
   let listContainer: HTMLElement;
   let newCommentIds = $state<Set<string>>(new Set());
   let isScrolledToBottom = $state(true);
+  let isScrolledFromTop = $state(false); // Track if scrolled away from top (>100px)
   let unsubscribe: (() => void) | null = null;
   
   // Subscribe to comment store
@@ -49,16 +50,15 @@
       
       comments = storeComments;
       
-      // Auto-scroll to bottom if enabled and user was already at bottom
-      if (autoScroll && isScrolledToBottom && newCommentsFromStore.length > 0) {
-        requestAnimationFrame(() => scrollToBottom());
+      // Auto-scroll to top if enabled and new comments arrive (latest comments are at top)
+      if (autoScroll && !isScrolledFromTop && newCommentsFromStore.length > 0) {
+        requestAnimationFrame(() => {
+          listContainer?.scrollTo({ top: 0, behavior: 'smooth' });
+        });
       }
     });
     
-    // Initial scroll to bottom
-    if (autoScroll) {
-      requestAnimationFrame(() => scrollToBottom());
-    }
+    // No initial scroll - keep at top to show latest comments
   });
   
   onDestroy(() => {
@@ -81,11 +81,14 @@
     const { scrollTop, scrollHeight, clientHeight } = listContainer;
     const threshold = 50; // pixels from bottom
     isScrolledToBottom = scrollTop + clientHeight >= scrollHeight - threshold;
+    
+    // Track if user scrolled away from top (show "最新へ" button when >100px from top)
+    isScrolledFromTop = scrollTop > 100;
   }
   
-  // Manual scroll to bottom button
-  function handleScrollToBottomClick() {
-    scrollToBottom();
+  // Manual scroll to top (latest comments) button  
+  function handleScrollToLatestClick() {
+    listContainer?.scrollTo({ top: 0, behavior: 'smooth' });
   }
   
   // Keyboard navigation
@@ -100,7 +103,7 @@
   }
   
   // Get comment count text
-  const commentCountText = $derived(() => {
+  const commentCountText = $derived.by(() => {
     const count = comments.length;
     if (count === 0) return 'コメントはありません';
     if (count === 1) return '1件のコメント';
@@ -120,14 +123,14 @@
       {commentCountText}
     </h2>
     
-    {#if comments.length > 0 && !isScrolledToBottom}
+    {#if comments.length > 0 && isScrolledFromTop}
       <button
-        class="scroll-to-bottom-btn"
-        onclick={handleScrollToBottomClick}
-        title="最新のコメントへ移動"
+        class="scroll-to-latest-btn"
+        onclick={handleScrollToLatestClick}
+        title="最新のコメントへ移動（上部）"
         aria-label="最新のコメントへスクロール"
       >
-        <span class="scroll-icon">↓</span>
+        <span class="scroll-icon">↑</span>
         最新へ
       </button>
     {/if}
@@ -203,7 +206,7 @@
     margin: 0;
   }
 
-  .scroll-to-bottom-btn {
+  .scroll-to-latest-btn {
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -219,13 +222,13 @@
     box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
   }
 
-  .scroll-to-bottom-btn:hover {
+  .scroll-to-latest-btn:hover {
     background: #2563eb;
     transform: translateY(-1px);
     box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
   }
 
-  .scroll-to-bottom-btn:active {
+  .scroll-to-latest-btn:active {
     transform: translateY(0);
   }
 
@@ -333,7 +336,7 @@
       font-size: 0.875rem;
     }
 
-    .scroll-to-bottom-btn {
+    .scroll-to-latest-btn {
       padding: 0.375rem 0.625rem;
       font-size: 0.6875rem;
     }
@@ -367,7 +370,7 @@
       animation: none;
     }
 
-    .scroll-to-bottom-btn {
+    .scroll-to-latest-btn {
       transition: none;
     }
   }

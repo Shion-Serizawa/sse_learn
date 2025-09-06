@@ -318,6 +318,27 @@
     gap: 0.75rem;
   }
 
+  /* Tailwind-style color classes */
+  .text-green-600 { color: #059669; }
+  .bg-green-50 { background-color: #f0fdf4; }
+  .border-green-200 { border-color: #bbf7d0; }
+  
+  .text-yellow-600 { color: #d97706; }
+  .bg-yellow-50 { background-color: #fffbeb; }
+  .border-yellow-200 { border-color: #fde68a; }
+  
+  .text-blue-600 { color: #2563eb; }
+  .bg-blue-50 { background-color: #eff6ff; }
+  .border-blue-200 { border-color: #bfdbfe; }
+  
+  .text-red-600 { color: #dc2626; }
+  .bg-red-50 { background-color: #fef2f2; }
+  .border-red-200 { border-color: #fecaca; }
+  
+  .text-gray-600 { color: #4b5563; }
+  .bg-gray-50 { background-color: #f9fafb; }
+  .border-gray-200 { border-color: #e5e7eb; }
+
   .stat-item {
     display: flex;
     flex-direction: column;

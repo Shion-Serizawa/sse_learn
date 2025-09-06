@@ -2,6 +2,7 @@ package com.example.sselearn.controller
 
 import com.example.sselearn.dto.CommentRequest
 import com.example.sselearn.entity.Comment
+import com.example.sselearn.exception.ValidationException
 import com.example.sselearn.service.CommentService
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -25,24 +26,36 @@ class CommentController(
 
     @PostMapping(consumes = [MediaType.APPLICATION_JSON_VALUE])
     fun postComment(@RequestBody request: CommentRequest): ResponseEntity<String> {
+        // バリデーションエラーを収集
+        val fieldErrors = mutableMapOf<String, String>()
+        
         // 必須フィールドのバリデーション
-        if (request.username.isNullOrBlank() || request.message.isNullOrBlank()) {
-            return ResponseEntity.badRequest().body("Bad Request: username and message are required")
+        if (request.username.isNullOrBlank()) {
+            fieldErrors["username"] = "ユーザー名は必須です"
+        }
+        if (request.message.isNullOrBlank()) {
+            fieldErrors["message"] = "メッセージは必須です"
         }
         
         // 長さ制限バリデーション
-        if (request.username.length > 50) {
-            return ResponseEntity.badRequest().body("Bad Request: username too long (max 50 characters)")
+        if (!request.username.isNullOrBlank() && request.username.length > 50) {
+            fieldErrors["username"] = "ユーザー名は50文字以内で入力してください"
         }
-        if (request.message.length > 500) {
-            return ResponseEntity.badRequest().body("Bad Request: message too long (max 500 characters)")
+        if (!request.message.isNullOrBlank() && request.message.length > 500) {
+            fieldErrors["message"] = "メッセージは500文字以内で入力してください"
+        }
+        
+        // バリデーションエラーがある場合は例外をスロー
+        if (fieldErrors.isNotEmpty()) {
+            throw ValidationException("入力データに問題があります", fieldErrors)
         }
         
         // バリデーション通過後、Commentエンティティを生成
+        // バリデーション済みなのでnull安全キャストを使用
         val comment = Comment(
             id = UUID.randomUUID(),
-            username = request.username,
-            message = request.message,
+            username = request.username!!,
+            message = request.message!!,
             timestamp = LocalDateTime.now()
         )
         

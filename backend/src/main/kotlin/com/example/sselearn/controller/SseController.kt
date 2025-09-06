@@ -4,6 +4,7 @@ import com.example.sselearn.service.CommentService
 import org.slf4j.LoggerFactory
 import org.springframework.core.env.Environment
 import org.springframework.http.MediaType
+import org.springframework.web.bind.annotation.CrossOrigin
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
@@ -31,6 +32,7 @@ class SseController(
      * コメントストリーミング用エンドポイント
      * クライアントがコメントストリームに接続する際のエンドポイント
      */
+    @CrossOrigin(origins = ["http://localhost:5173", "http://127.0.0.1:5173"], allowCredentials = "true")
     @GetMapping("/comments", produces = [MediaType.TEXT_EVENT_STREAM_VALUE])
     fun getCommentsStream(): SseEmitter {
         val activeProfiles = environment.activeProfiles

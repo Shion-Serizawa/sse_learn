@@ -6,8 +6,8 @@ import org.springframework.scheduling.annotation.EnableScheduling
 
 @SpringBootApplication
 @EnableScheduling
-class SselearnApplication
+class SseLearnApplication
 
 fun main(args: Array<String>) {
-    runApplication<SselearnApplication>(*args)
+    runApplication<SseLearnApplication>(*args)
 }

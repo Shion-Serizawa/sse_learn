@@ -12,7 +12,8 @@
       "mcp__serena__insert_after_symbol",
       "Bash(git checkout:*)",
       "Bash(npm test:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(git add:*)"
     ],
     "deny": []
   }

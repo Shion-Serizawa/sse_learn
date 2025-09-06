@@ -78,4 +78,142 @@ class CommentControllerTests {
         assertThat(response.statusCode).isEqualTo(HttpStatus.CREATED)
         assertThat(response.body).contains("id") // レスポンスにIDが含まれていることを確認
     }
+    
+    // === 2.2 コメントデータ構造とバリデーション ===
+    
+    @Test
+    fun `username フィールドを含むJSONを受け取る`() {
+        // Red: usernameフィールドありのJSONが正しく処理されることを期待
+        val headers = HttpHeaders().apply { 
+            contentType = MediaType.APPLICATION_JSON 
+        }
+        val jsonWithUsername = """{"username":"testuser","message":"test"}"""
+        val request = HttpEntity(jsonWithUsername, headers)
+        val response = restTemplate.exchange("/api/comments", HttpMethod.POST, request, String::class.java)
+        
+        assertThat(response.statusCode).isEqualTo(HttpStatus.CREATED)
+        // レスポンスにusernameが何らかの形で反映されていることを確認
+        assertThat(response.body).isNotNull()
+    }
+    
+    @Test
+    fun `message フィールドを含むJSONを受け取る`() {
+        val headers = HttpHeaders().apply { 
+            contentType = MediaType.APPLICATION_JSON 
+        }
+        val jsonWithMessage = """{"username":"testuser","message":"test message"}"""
+        val request = HttpEntity(jsonWithMessage, headers)
+        val response = restTemplate.exchange("/api/comments", HttpMethod.POST, request, String::class.java)
+        
+        assertThat(response.statusCode).isEqualTo(HttpStatus.CREATED)
+        assertThat(response.body).isNotNull()
+    }
+    
+    @Test
+    fun `両フィールドが必須であることを検証する（username欠如）`() {
+        // Red: usernameが欠けている場合に400エラーが返されることを期待
+        val headers = HttpHeaders().apply { 
+            contentType = MediaType.APPLICATION_JSON 
+        }
+        val jsonWithoutUsername = """{"message":"test message"}"""
+        val request = HttpEntity(jsonWithoutUsername, headers)
+        val response = restTemplate.exchange("/api/comments", HttpMethod.POST, request, String::class.java)
+        
+        assertThat(response.statusCode).isEqualTo(HttpStatus.BAD_REQUEST)
+    }
+    
+    @Test
+    fun `両フィールドが必須であることを検証する（message欠如）`() {
+        // Red: messageが欠けている場合に400エラーが返されることを期待
+        val headers = HttpHeaders().apply { 
+            contentType = MediaType.APPLICATION_JSON 
+        }
+        val jsonWithoutMessage = """{"username":"testuser"}"""
+        val request = HttpEntity(jsonWithoutMessage, headers)
+        val response = restTemplate.exchange("/api/comments", HttpMethod.POST, request, String::class.java)
+        
+        assertThat(response.statusCode).isEqualTo(HttpStatus.BAD_REQUEST)
+    }
+    
+    @Test
+    fun `空文字列やnullの場合にHTTP 400を返す（username空文字列）`() {
+        val headers = HttpHeaders().apply { 
+            contentType = MediaType.APPLICATION_JSON 
+        }
+        val jsonWithEmptyUsername = """{"username":"","message":"test"}"""
+        val request = HttpEntity(jsonWithEmptyUsername, headers)
+        val response = restTemplate.exchange("/api/comments", HttpMethod.POST, request, String::class.java)
+        
+        assertThat(response.statusCode).isEqualTo(HttpStatus.BAD_REQUEST)
+    }
+    
+    @Test
+    fun `空文字列やnullの場合にHTTP 400を返す（message空文字列）`() {
+        val headers = HttpHeaders().apply { 
+            contentType = MediaType.APPLICATION_JSON 
+        }
+        val jsonWithEmptyMessage = """{"username":"user","message":""}"""
+        val request = HttpEntity(jsonWithEmptyMessage, headers)
+        val response = restTemplate.exchange("/api/comments", HttpMethod.POST, request, String::class.java)
+        
+        assertThat(response.statusCode).isEqualTo(HttpStatus.BAD_REQUEST)
+    }
+    
+    @Test
+    fun `空文字列やnullの場合にHTTP 400を返す（usernameがnull）`() {
+        val headers = HttpHeaders().apply { 
+            contentType = MediaType.APPLICATION_JSON 
+        }
+        val jsonWithNullUsername = """{"username":null,"message":"test"}"""
+        val request = HttpEntity(jsonWithNullUsername, headers)
+        val response = restTemplate.exchange("/api/comments", HttpMethod.POST, request, String::class.java)
+        
+        assertThat(response.statusCode).isEqualTo(HttpStatus.BAD_REQUEST)
+    }
+    
+    @Test
+    fun `username長すぎる（50文字超）でHTTP 400を返す`() {
+        // Red: 51文字のusernameで400エラーが返されることを期待
+        val headers = HttpHeaders().apply { 
+            contentType = MediaType.APPLICATION_JSON 
+        }
+        val longUsername = "a".repeat(51) // 51文字
+        val jsonWithLongUsername = """{"username":"$longUsername","message":"test"}"""
+        val request = HttpEntity(jsonWithLongUsername, headers)
+        val response = restTemplate.exchange("/api/comments", HttpMethod.POST, request, String::class.java)
+        
+        assertThat(response.statusCode).isEqualTo(HttpStatus.BAD_REQUEST)
+    }
+    
+    @Test
+    fun `message長すぎる（500文字超）でHTTP 400を返す`() {
+        // Red: 501文字のmessageで400エラーが返されることを期待
+        val headers = HttpHeaders().apply { 
+            contentType = MediaType.APPLICATION_JSON 
+        }
+        val longMessage = "a".repeat(501) // 501文字
+        val jsonWithLongMessage = """{"username":"user","message":"$longMessage"}"""
+        val request = HttpEntity(jsonWithLongMessage, headers)
+        val response = restTemplate.exchange("/api/comments", HttpMethod.POST, request, String::class.java)
+        
+        assertThat(response.statusCode).isEqualTo(HttpStatus.BAD_REQUEST)
+    }
+    
+    @Test
+    fun `成功時にCommentエンティティを生成する`() {
+        // Red: 有効なJSONでCommentエンティティが内部で生成されることを期待
+        // エンティティ生成を直接テストするのは困難なため、
+        // レスポンスに含まれる要素でエンティティ生成を推測する
+        val headers = HttpHeaders().apply { 
+            contentType = MediaType.APPLICATION_JSON 
+        }
+        val validJson = """{"username":"testuser","message":"test message"}"""
+        val request = HttpEntity(validJson, headers)
+        val response = restTemplate.exchange("/api/comments", HttpMethod.POST, request, String::class.java)
+        
+        assertThat(response.statusCode).isEqualTo(HttpStatus.CREATED)
+        assertThat(response.body).contains("id")
+        assertThat(response.body).contains("status")
+        // 将来的にはtimestampやその他の要素も含まれることを期待
+    }
 }

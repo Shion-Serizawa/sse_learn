@@ -57,5 +57,8 @@ docker-data/
 temp/
 tmp/
 
+# Test scripts (manual testing only)
+test-*.ps1
+
 # Other
 .serena/

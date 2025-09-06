@@ -1,6 +1,7 @@
 package com.example.sselearn.controller
 
 import com.example.sselearn.dto.CommentRequest
+import com.example.sselearn.dto.CommentResponse
 import com.example.sselearn.entity.Comment
 import com.example.sselearn.exception.ValidationException
 import com.example.sselearn.service.CommentService
@@ -25,7 +26,7 @@ class CommentController(
 ) {
 
     @PostMapping(consumes = [MediaType.APPLICATION_JSON_VALUE])
-    fun postComment(@RequestBody request: CommentRequest): ResponseEntity<String> {
+    fun postComment(@RequestBody request: CommentRequest): ResponseEntity<CommentResponse> {
         // バリデーションエラーを収集
         val fieldErrors = mutableMapOf<String, String>()
         
@@ -63,7 +64,10 @@ class CommentController(
         val savedComment = commentService.saveComment(comment)
         
         // 201と作成されたコメント情報を返す
-        return ResponseEntity.status(HttpStatus.CREATED)
-            .body("""{"id":"${savedComment.id}","status":"created","timestamp":"${savedComment.timestamp}"}""")
+        val response = CommentResponse(
+            id = savedComment.id,
+            timestamp = savedComment.timestamp
+        )
+        return ResponseEntity.status(HttpStatus.CREATED).body(response)
     }
 }

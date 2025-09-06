@@ -6,7 +6,7 @@ gradle = "8"
 
 [tasks.backend]
 description = "Run backend development server"
-run = "cd backend && ./gradlew.bat bootRun"
+run = "cd backend && mise exec -- gradlew.bat bootRun"
 
 [tasks.frontend]
 description = "Run frontend development server"  
@@ -19,14 +19,14 @@ depends = ["backend", "frontend"]
 [tasks.test]
 description = "Run all tests"
 run = [
-    "cd backend && ./gradlew.bat test",
+    "cd backend && mise exec -- gradlew.bat test",
     "cd frontend && npm test"
 ]
 
 [tasks.build]
 description = "Build all components"
 run = [
-    "cd backend && ./gradlew.bat build",
+    "cd backend && mise exec -- gradlew.bat build",
     "cd frontend && npm run build"
 ]
 

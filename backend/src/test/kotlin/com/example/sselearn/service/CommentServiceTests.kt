@@ -4,8 +4,11 @@ import com.example.sselearn.entity.Comment
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.mockito.Mockito.verify
+import org.mockito.Mockito.times
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.test.context.ActiveProfiles
 import java.time.LocalDateTime
 import java.util.UUID
@@ -20,6 +23,9 @@ class CommentServiceTests {
 
     @Autowired
     private lateinit var commentService: CommentService
+    
+    @MockBean
+    private lateinit var sseService: SseService
 
     @BeforeEach
     fun setup() {
@@ -122,5 +128,86 @@ class CommentServiceTests {
         
         // 全てのコメントが正しく保存されていることを確認
         assertThat(commentService.getCommentCount()).isEqualTo(totalExpected)
+    }
+    
+    // === 2.4 コメントSSE配信（既存SseService統合） ===
+    
+    @Test
+    fun `CommentServiceからSseServiceのbroadcastToAllを呼び出す`() {
+        // Red: コメント保存時にSSE配信が呼び出されることを期待
+        val comment = Comment(
+            id = UUID.randomUUID(),
+            username = "testuser",
+            message = "test message",
+            timestamp = LocalDateTime.now()
+        )
+        
+        commentService.saveComment(comment)
+        
+        // SseServiceのbroadcastToAllが呼ばれることを検証
+        verify(sseService, times(1)).broadcastToAll("comment", comment)
+    }
+    
+    @Test
+    fun `新しいコメントがSSE経由で全クライアントに配信される`() {
+        val comment1 = Comment(UUID.randomUUID(), "user1", "message1", LocalDateTime.now())
+        val comment2 = Comment(UUID.randomUUID(), "user2", "message2", LocalDateTime.now())
+        
+        commentService.saveComment(comment1)
+        commentService.saveComment(comment2)
+        
+        // 各コメントごとにSSE配信が呼ばれることを検証
+        verify(sseService, times(1)).broadcastToAll("comment", comment1)
+        verify(sseService, times(1)).broadcastToAll("comment", comment2)
+    }
+    
+    @Test
+    fun `配信データがJSON形式である（Jackson自動変換）`() {
+        // Red: SseServiceへCommentオブジェクトがそのまま渡されることを期待
+        // Springの自動JSON変換により、配信時にJSON形式になる
+        val comment = Comment(
+            id = UUID.randomUUID(),
+            username = "testuser",
+            message = "test message", 
+            timestamp = LocalDateTime.now()
+        )
+        
+        commentService.saveComment(comment)
+        
+        // Commentオブジェクト自体が渡されることを確認（JSON変換はSpringが自動で行う）
+        verify(sseService, times(1)).broadcastToAll("comment", comment)
+    }
+    
+    @Test
+    fun `配信データにid username message timestampが含まれる`() {
+        val commentId = UUID.randomUUID()
+        val timestamp = LocalDateTime.now()
+        val comment = Comment(
+            id = commentId,
+            username = "testuser",
+            message = "test message",
+            timestamp = timestamp
+        )
+        
+        commentService.saveComment(comment)
+        
+        // Commentエンティティが完全に渡されることを確認
+        verify(sseService, times(1)).broadcastToAll("comment", comment)
+        
+        // 実際のコメントデータが正しく設定されていることを確認
+        assertThat(comment.id).isEqualTo(commentId)
+        assertThat(comment.username).isEqualTo("testuser")
+        assertThat(comment.message).isEqualTo("test message")
+        assertThat(comment.timestamp).isEqualTo(timestamp)
+    }
+    
+    @Test
+    fun `event comment イベント名で配信される`() {
+        val comment = Comment(UUID.randomUUID(), "user", "message", LocalDateTime.now())
+        
+        commentService.saveComment(comment)
+        
+        // "comment"イベント名で配信されることを確認
+        verify(sseService, times(1)).broadcastToAll("comment", comment)
     }
 }

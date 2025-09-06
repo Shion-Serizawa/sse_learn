@@ -1,6 +1,7 @@
 package com.example.sselearn.service
 
 import com.example.sselearn.entity.Comment
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.util.concurrent.ConcurrentHashMap
 import java.util.UUID
@@ -10,7 +11,13 @@ import java.util.UUID
  * コメントのCRUD操作とメモリストレージを管理
  */
 @Service
-class CommentService {
+class CommentService(
+    private val sseService: SseService
+) {
+
+    companion object {
+        private val logger = LoggerFactory.getLogger(CommentService::class.java)
+    }
 
     // スレッドセーフなメモリストレージ
     private val comments = ConcurrentHashMap<UUID, Comment>()
@@ -20,6 +27,12 @@ class CommentService {
      */
     fun saveComment(comment: Comment): Comment {
         comments[comment.id] = comment
+        logger.debug("コメントを保存しました: id={}, username={}", comment.id, comment.username)
+        
+        // 保存後にSSE経由で全クライアントに配信
+        sseService.broadcastToAll("comment", comment)
+        logger.debug("コメントをSSE配信しました: id={}", comment.id)
+        
         return comment
     }
 

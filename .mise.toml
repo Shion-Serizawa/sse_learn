@@ -42,3 +42,7 @@ run = "docker-compose --profile full up -d"
 [tasks.docker-stop]
 description = "Stop all Docker services"
 run = "docker-compose down"
+
+[tasks.codex]
+description = "Run OpenAI Codex CLI"
+run = "mise exec -- codex"

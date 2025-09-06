@@ -1,6 +1,7 @@
 package com.example.sselearn.service
 
 import org.slf4j.LoggerFactory
+import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
 import java.util.concurrent.ConcurrentHashMap
@@ -14,7 +15,7 @@ class SseService {
 
     companion object {
         private val logger = LoggerFactory.getLogger(SseService::class.java)
-        private const val DEFAULT_TIMEOUT_MS = 30_000L
+        private const val DEFAULT_TIMEOUT_MS = 300_000L // 5分 (ライブ配信視聴用)
     }
 
     // アクティブな接続を管理（スレッドセーフ）
@@ -108,5 +109,23 @@ class SseService {
         }
         activeConnections.clear()
         logger.info("{}個のSSE接続を全て終了しました", connectionCount)
+    }
+
+    /**
+     * Keep-Aliveハートビート送信（4分間隔）
+     * 5分タイムアウトの前に生存確認を送信して接続維持
+     */
+    @Scheduled(fixedRate = 240_000) // 4分間隔
+    fun sendKeepAlive() {
+        if (activeConnections.isEmpty()) {
+            return
+        }
+        
+        logger.debug("Keep-Aliveハートビートを送信中...アクティブ接続数: {}", activeConnections.size)
+        broadcastToAll("ping", mapOf(
+            "type" to "keep-alive",
+            "timestamp" to System.currentTimeMillis(),
+            "activeConnections" to activeConnections.size
+        ))
     }
 }

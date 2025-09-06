@@ -25,7 +25,7 @@ export class SseService {
   ) {
     this.config = {
       url,
-      maxReconnectAttempts: 10,
+      maxReconnectAttempts: 20, // 10回 → 20回に増加（長時間視聴対応）
       reconnectInterval: 1000,
       exponentialBackoff: true,
       ...config
@@ -34,7 +34,7 @@ export class SseService {
     this.reconnectionStrategy = {
       maxAttempts: this.config.maxReconnectAttempts,
       baseDelay: this.config.reconnectInterval,
-      maxDelay: 30000, // 最大30秒
+      maxDelay: 60000, // 最大30秒 → 60秒に延長（ライブ配信用）
       exponentialBackoff: this.config.exponentialBackoff
     };
   }
@@ -180,6 +180,17 @@ export class SseService {
         this.handlers.onCommentHistory?.(comments);
       } catch (error) {
         console.error('SseService: Failed to parse comment history:', error);
+      }
+    });
+
+    // 'ping' イベント（Keep-Aliveハートビート）
+    this.eventSource.addEventListener('ping', (event) => {
+      try {
+        const keepAliveData = JSON.parse(event.data);
+        console.debug('SseService: Keep-alive received:', keepAliveData);
+        // ハートビート受信をログに記録（デバッグ用）
+      } catch (error) {
+        console.warn('SseService: Failed to parse keep-alive data:', error);
       }
     });
   }

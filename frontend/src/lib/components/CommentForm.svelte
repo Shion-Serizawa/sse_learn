@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import { CommentApi } from '../services/CommentApi';
   import type { CommentRequest, ApiError } from '../types/comment';
   
@@ -26,9 +27,27 @@
   // Constants
   const MAX_USERNAME_LENGTH = 50;
   const MAX_MESSAGE_LENGTH = 500;
+  const USERNAME_STORAGE_KEY = 'sse-learn-username';
   
   // Create API instance
   const commentApi = new CommentApi(baseUrl);
+  
+  // Load saved username from localStorage
+  onMount(() => {
+    if (typeof window !== 'undefined') {
+      const savedUsername = localStorage.getItem(USERNAME_STORAGE_KEY);
+      if (savedUsername) {
+        username = savedUsername;
+      }
+    }
+  });
+  
+  // Save username to localStorage whenever it changes
+  $effect(() => {
+    if (typeof window !== 'undefined' && username.trim()) {
+      localStorage.setItem(USERNAME_STORAGE_KEY, username);
+    }
+  });
   
   // Computed values
   const usernameCount = $derived(username.length);
@@ -107,8 +126,7 @@
       if (result.success) {
         console.log('CommentForm: Comment posted successfully', result.data);
         
-        // Clear form on success
-        username = '';
+        // Clear message only on success (keep username)
         message = '';
         errors = {};
         
@@ -143,6 +161,14 @@
       errors = rest;
     }
   }
+  
+  // Clear saved username
+  function clearUsername() {
+    username = '';
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(USERNAME_STORAGE_KEY);
+    }
+  }
 </script>
 
 <form class="comment-form" onsubmit={handleSubmit}>
@@ -155,10 +181,23 @@
   
   <!-- Username field -->
   <div class="form-group">
-    <label for="username" class="form-label">
-      ユーザー名
-      <span class="required-mark">*</span>
-    </label>
+    <div class="label-with-actions">
+      <label for="username" class="form-label">
+        ユーザー名
+        <span class="required-mark">*</span>
+      </label>
+      {#if username.trim()}
+        <button 
+          type="button" 
+          class="clear-username-btn"
+          onclick={clearUsername}
+          title="保存されたユーザー名をクリア"
+          aria-label="ユーザー名をクリア"
+        >
+          🗑️ クリア
+        </button>
+      {/if}
+    </div>
     <div class="input-wrapper">
       <input
         id="username"
@@ -166,7 +205,7 @@
         bind:value={username}
         oninput={validateUsername}
         onfocus={() => clearError('username')}
-        placeholder="ユーザー名を入力してください"
+        placeholder="ユーザー名を入力してください（自動保存されます）"
         maxlength={MAX_USERNAME_LENGTH}
         class="form-input"
         class:error={errors.username}
@@ -254,6 +293,13 @@
     gap: 0.5rem;
   }
 
+  .label-with-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
   .form-label {
     font-weight: 600;
     font-size: 0.875rem;
@@ -261,6 +307,30 @@
     display: flex;
     align-items: center;
     gap: 0.25rem;
+  }
+
+  .clear-username-btn {
+    padding: 0.25rem 0.5rem;
+    background: #f3f4f6;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    color: #6b7280;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .clear-username-btn:hover {
+    background: #e5e7eb;
+    border-color: #9ca3af;
+    color: #374151;
+  }
+
+  .clear-username-btn:active {
+    transform: scale(0.95);
   }
 
   .required-mark {
